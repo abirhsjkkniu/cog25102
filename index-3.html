@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BSC Exam Seat Finder — 2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0f1e;
+      --surface: #111827;
+      --card: #161d2e;
+      --border: rgba(99,179,237,0.15);
+      --accent: #38bdf8;
+      --accent2: #818cf8;
+      --gold: #fbbf24;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --success: #34d399;
+      --danger: #f87171;
+      --radius: 16px;
+      --shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Background grid ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(56,189,248,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(56,189,248,0.04) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none; z-index: 0;
+    }
+
+    /* ── Glow orbs ── */
+    .orb {
+      position: fixed; border-radius: 50%; pointer-events: none; z-index: 0;
+      filter: blur(80px); opacity: 0.18;
+    }
+    .orb1 { width: 400px; height: 400px; background: #38bdf8; top: -100px; left: -100px; }
+    .orb2 { width: 320px; height: 320px; background: #818cf8; bottom: -80px; right: -80px; }
+
+    /* ── Header ── */
+    header {
+      position: relative; z-index: 10;
+      padding: 32px 24px 0;
+      text-align: center;
+    }
+    .badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(56,189,248,0.1);
+      border: 1px solid rgba(56,189,248,0.3);
+      border-radius: 100px;
+      padding: 6px 16px;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px; letter-spacing: 0.1em;
+      color: var(--accent); margin-bottom: 24px;
+    }
+    .badge::before { content: '●'; font-size: 8px; animation: blink 1.4s infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(2rem, 6vw, 3.6rem);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #e2e8f0 30%, var(--accent) 70%, var(--accent2) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 12px;
+    }
+    .subtitle {
+      color: var(--muted);
+      font-size: clamp(0.875rem, 2vw, 1rem);
+      font-weight: 300;
+      max-width: 480px; margin: 0 auto 40px;
+    }
+
+    /* ── Main card ── */
+    main { position: relative; z-index: 10; padding: 0 16px 80px; }
+    .container { max-width: 680px; margin: 0 auto; }
+
+    .search-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .input-row {
+      display: flex; gap: 12px; align-items: stretch;
+    }
+    .input-wrap {
+      flex: 1; position: relative;
+    }
+    .input-wrap label {
+      display: block;
+      font-family: 'DM Mono', monospace;
+      font-size: 10px; letter-spacing: 0.12em;
+      color: var(--accent); text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .input-wrap input {
+      width: 100%;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      font-size: 1.25rem; font-weight: 500;
+      padding: 14px 20px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+      letter-spacing: 0.08em;
+    }
+    .input-wrap input::placeholder { color: rgba(148,163,184,0.4); }
+    .input-wrap input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(56,189,248,0.15);
+      background: rgba(56,189,248,0.04);
+    }
+    .input-wrap input.error { border-color: var(--danger); box-shadow: 0 0 0 3px rgba(248,113,113,0.15); }
+    .input-wrap input.success { border-color: var(--success); box-shadow: 0 0 0 3px rgba(52,211,153,0.15); }
+
+    .btn {
+      align-self: flex-end;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border: none; border-radius: 10px;
+      color: #0a0f1e; font-family: 'Syne', sans-serif;
+      font-size: 0.95rem; font-weight: 700;
+      padding: 14px 28px; cursor: pointer;
+      transition: transform 0.15s, opacity 0.15s, box-shadow 0.2s;
+      white-space: nowrap;
+      box-shadow: 0 4px 20px rgba(56,189,248,0.3);
+    }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(56,189,248,0.45); }
+    .btn:active { transform: translateY(0); }
+
+    /* ── Error msg ── */
+    .error-msg {
+      margin-top: 12px;
+      color: var(--danger);
+      font-size: 0.85rem;
+      font-family: 'DM Mono', monospace;
+      display: none;
+    }
+    .error-msg.show { display: block; animation: fadeIn 0.2s; }
+
+    /* ── Result ── */
+    #result {
+      margin-top: 28px;
+      display: none;
+      animation: slideUp 0.35s cubic-bezier(0.16,1,0.3,1);
+    }
+    #result.show { display: block; }
+
+    @keyframes slideUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes fadeIn  { from { opacity:0; } to { opacity:1; } }
+
+    .result-header {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 20px;
+    }
+    .check-icon {
+      width: 36px; height: 36px;
+      background: rgba(52,211,153,0.15);
+      border: 1px solid rgba(52,211,153,0.4);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; flex-shrink: 0;
+    }
+    .result-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700; font-size: 1.1rem;
+      color: var(--success);
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    @media (max-width: 480px) {
+      .info-grid { grid-template-columns: 1fr; }
+      .input-row { flex-direction: column; }
+      .btn { align-self: stretch; }
+    }
+
+    .info-item {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+    }
+    .info-item.full { grid-column: 1 / -1; }
+    .info-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px; letter-spacing: 0.12em;
+      color: var(--muted); text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .info-value {
+      font-weight: 500; font-size: 0.95rem;
+      color: var(--text); line-height: 1.4;
+    }
+    .info-value.mono {
+      font-family: 'DM Mono', monospace;
+      font-size: 1.05rem; color: var(--gold);
+    }
+
+    /* ── Map button ── */
+    .map-btn {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      width: 100%;
+      background: rgba(56,189,248,0.08);
+      border: 1px solid rgba(56,189,248,0.3);
+      border-radius: 10px;
+      color: var(--accent);
+      font-family: 'Syne', sans-serif; font-weight: 600;
+      font-size: 0.95rem;
+      padding: 14px;
+      cursor: pointer; text-decoration: none;
+      transition: background 0.2s, border-color 0.2s, transform 0.15s;
+      margin-top: 4px;
+    }
+    .map-btn:hover {
+      background: rgba(56,189,248,0.16);
+      border-color: rgba(56,189,248,0.5);
+      transform: translateY(-1px);
+    }
+    .map-icon { font-size: 1.2rem; }
+
+    /* ── Stats bar ── */
+    .stats {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 12px; margin-bottom: 32px;
+    }
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 16px; text-align: center;
+    }
+    .stat-num {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.5rem; font-weight: 800;
+      color: var(--accent);
+    }
+    .stat-label {
+      font-size: 0.75rem; color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* ── Footer ── */
+    footer {
+      position: relative; z-index: 10;
+      text-align: center; padding: 0 16px 32px;
+      color: var(--muted); font-size: 0.8rem;
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    /* ── Divider ── */
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border), transparent);
+      margin: 24px 0;
+    }
+
+    /* ── Exam info pills ── */
+    .pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+    .pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(129,140,248,0.1);
+      border: 1px solid rgba(129,140,248,0.25);
+      border-radius: 100px;
+      padding: 5px 12px;
+      font-size: 0.8rem; color: var(--accent2);
+    }
+
+    .roll-range-bar {
+      height: 6px; border-radius: 3px;
+      background: rgba(255,255,255,0.06);
+      margin-top: 8px; overflow: hidden;
+    }
+    .roll-range-fill {
+      height: 100%; border-radius: 3px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      transition: width 0.6s cubic-bezier(0.16,1,0.3,1);
+    }
+    .range-labels {
+      display: flex; justify-content: space-between;
+      font-family: 'DM Mono', monospace;
+      font-size: 10px; color: var(--muted);
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+
+<header>
+  <div class="badge">BSC Exam · 16 May 2026 · Saturday</div>
+  <h1>Find Your<br/>Exam Center</h1>
+  <p class="subtitle">Bangladesh Bank Officer (General) — MCQ Preliminary. Enter your roll number to locate your exam center instantly.</p>
+</header>
+
+<main>
+  <div class="container">
+
+    <!-- Stats -->
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-num">44</div>
+        <div class="stat-label">Centers</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">1,880</div>
+        <div class="stat-label">Vacancies</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">1,23,040</div>
+        <div class="stat-label">Candidates</div>
+      </div>
+    </div>
+
+    <!-- Search -->
+    <div class="search-card">
+      <div class="input-row">
+        <div class="input-wrap">
+          <label>Roll Number</label>
+          <input
+            type="number"
+            id="rollInput"
+            placeholder="e.g. 315000"
+            min="300001" max="453263"
+            inputmode="numeric"
+            autofocus
+          />
+        </div>
+        <button class="btn" onclick="findCenter()">Find →</button>
+      </div>
+      <div class="error-msg" id="errorMsg">⚠ Roll number not found. Please check and try again.</div>
+
+      <!-- Result -->
+      <div id="result">
+        <div class="divider"></div>
+        <div class="result-header">
+          <div class="check-icon">✓</div>
+          <div class="result-title">Center Found!</div>
+        </div>
+
+        <div class="info-grid">
+          <div class="info-item">
+            <div class="info-label">Roll Number</div>
+            <div class="info-value mono" id="r_roll">—</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Sl No.</div>
+            <div class="info-value mono" id="r_sl">—</div>
+          </div>
+          <div class="info-item full">
+            <div class="info-label">Exam Center</div>
+            <div class="info-value" id="r_name">—</div>
+          </div>
+          <div class="info-item full">
+            <div class="info-label">Address</div>
+            <div class="info-value" id="r_addr">—</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Roll Range</div>
+            <div class="info-value mono" id="r_range">—</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Total Seats</div>
+            <div class="info-value mono" id="r_total">—</div>
+          </div>
+        </div>
+
+        <!-- Progress bar showing position in roll range -->
+        <div class="roll-range-bar">
+          <div class="roll-range-fill" id="r_bar" style="width:0%"></div>
+        </div>
+        <div class="range-labels">
+          <span id="r_bar_start">—</span>
+          <span style="color:var(--gold)" id="r_bar_roll">Your Roll</span>
+          <span id="r_bar_end">—</span>
+        </div>
+
+        <div class="pills">
+          <span class="pill">📅 16 May 2026</span>
+          <span class="pill">⏰ 3:00 PM – 4:00 PM</span>
+          <span class="pill">🕒 Arrive 1 hr early</span>
+        </div>
+
+        <a class="map-btn" id="mapLink" href="#" target="_blank" rel="noopener">
+          <span class="map-icon">📍</span> Open in Google Maps
+        </a>
+      </div>
+    </div>
+
+    <!-- Important notes -->
+    <div style="margin-top:24px; background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:24px;">
+      <div style="font-family:'Syne',sans-serif; font-weight:700; font-size:1rem; margin-bottom:14px; color:var(--gold);">⚠ Important Instructions</div>
+      <ul style="list-style:none; display:flex; flex-direction:column; gap:10px; font-size:0.875rem; color:var(--muted);">
+        <li>📄 Admit card (1 copy) must be brought. No entry without it.</li>
+        <li>🚫 No phones, calculators, smart watches, or electronic devices allowed.</li>
+        <li>👂 Both ears must remain visible during the exam.</li>
+        <li>🚪 Arrive <strong style="color:var(--text)">at least 1 hour before</strong> exam start. Late entry not permitted.</li>
+        <li>📝 No writing or scratching on the admit card.</li>
+        <li>🌐 Duplicate admit card: <a href="https://erecruitment.bb.org.bd" target="_blank" style="color:var(--accent)">erecruitment.bb.org.bd</a></li>
+      </ul>
+    </div>
+
+  </div>
+</main>
+
+<footer>
+  <p>Data source: Bangladesh Bank BSC Notice No. 174/2026 · Job ID: 25102</p>
+  <p style="margin-top:6px">Built for candidates · Not an official Bangladesh Bank product</p>
+</footer>
+
+<script>
+  const CENTERS = [
+    { sl:1,  name:"Banani Model School",                       addr:"Plot No #13, Road No-05, Block F, Banani, Dhaka 1",        start:300001, end:302569, total:2100,  lat:23.7938, lng:90.4037 },
+    { sl:2,  name:"Green Field School & College",               addr:"Plot-3, Block-C, Avenue-2, Mirpur-10, Dhaka 1216",         start:302570, end:304827, total:1800,  lat:23.8066, lng:90.3674 },
+    { sl:3,  name:"Sher-E-Bangla Nagar Govt. Girls' High School",addr:"Sher-E-Bangla Nagar, Dhaka-1207",                         start:304828, end:308582, total:3000,  lat:23.7716, lng:90.3677 },
+    { sl:4,  name:"Faridabad High School",                      addr:"15, Haricharan Roy Road, Faridabad, Shyampur, Dhaka 1204", start:308583, end:311611, total:2500,  lat:23.7215, lng:90.4127 },
+    { sl:5,  name:"Dhaka Cotton Mill Adarsha High School",      addr:"Posthakhowla, Dhaka 1204",                                 start:311612, end:314261, total:2100,  lat:23.7193, lng:90.4208 },
+    { sl:6,  name:"Kishori Lal Jubilee School & College",       addr:"39, North Brook Hall Road, Banglabazar, Dhaka 1100",       start:314262, end:316779, total:2000,  lat:23.7100, lng:90.4067 },
+    { sl:7,  name:"Dhaka Mohanagar Mohila College",             addr:"6 No. Subhash Bose Avenue, Laxmi Bazar, Sutrapur, Dhaka-1100", start:316780, end:321181, total:3500, lat:23.7072, lng:90.4131 },
+    { sl:8,  name:"Madertek Abdul Aziz School & College",       addr:"Bashabo, Sabujbagh, Dhaka 1214",                           start:321182, end:324928, total:3000,  lat:23.7372, lng:90.4388 },
+    { sl:9,  name:"Sabujbagh Government College",               addr:"70/3, South Basabo, Sabujbagh, Dhaka 1214",                start:324929, end:329876, total:4000,  lat:23.7395, lng:90.4411 },
+    { sl:10, name:"Ali Ahmed School & College",                 addr:"Goran, Khilgaon, Dhaka 1219",                              start:329877, end:333594, total:3000,  lat:23.7448, lng:90.4324 },
+    { sl:11, name:"Kadamtala Purba Basabo School & College",    addr:"28/3, Kadamtala, Basabo, Dhaka 1214",                      start:333595, end:338363, total:3800,  lat:23.7383, lng:90.4456 },
+    { sl:12, name:"Khilgaon Model College",                     addr:"Block-C, 721/1, Khilgaon Chowrashta, Dhaka 1219",          start:338365, end:343941, total:4500,  lat:23.7461, lng:90.4298 },
+    { sl:13, name:"Khilgaon Govt. Colony School & College",     addr:"560/C, Khilgaon, Dhaka 1219",                              start:343942, end:347351, total:2700,  lat:23.7453, lng:90.4271 },
+    { sl:14, name:"Khilgaon School and College",                addr:"711/C, Khilgaon, Dhaka 1219",                              start:347352, end:352362, total:4000,  lat:23.7469, lng:90.4282 },
+    { sl:15, name:"Kamalapur Sher-E-Bangla Railway School & College", addr:"Kamalapur, Dhaka 1217",                              start:352363, end:354999, total:2100,  lat:23.7274, lng:90.4254 },
+    { sl:16, name:"Motijheel Colony High School",               addr:"Motijheel, Dhaka",                                         start:355000, end:358754, total:3000,  lat:23.7337, lng:90.4183 },
+    { sl:17, name:"Demra College",                              addr:"Demra, Dhaka 1360",                                        start:358755, end:362505, total:3000,  lat:23.7127, lng:90.4890 },
+    { sl:18, name:"Bamoil Ideal High School and College",       addr:"Bamoil, Demra, Dhaka 1361",                                start:362506, end:364455, total:1564,  lat:23.7090, lng:90.4958 },
+    { sl:19, name:"Bawany School & College",                    addr:"27, Kamargop, Demra, Dhaka 1360",                          start:364456, end:370040, total:4500,  lat:23.7104, lng:90.4921 },
+    { sl:20, name:"Matuail Haji Abdul Latif Bhuiyan College",   addr:"Matuail Dakkhin Para, College Road, Demra, Jatrabari, Dhaka", start:370041, end:372309, total:1800, lat:23.7012, lng:90.4837 },
+    { sl:21, name:"Shekhdi Abdullah Mollah High School",        addr:"Shekhdi, Jatrabari, Dhaka 1362",                           start:372310, end:375155, total:2292,  lat:23.6988, lng:90.4761 },
+    { sl:22, name:"Barnamala Adarsha School And College",       addr:"Dania, Jatrabari, Dhaka-1236",                             start:375156, end:379525, total:3500,  lat:23.7003, lng:90.4609 },
+    { sl:23, name:"Jatrabari Ideal School & College",           addr:"Jatrabari, Dhaka 1232",                                    start:379528, end:383218, total:3000,  lat:23.7019, lng:90.4531 },
+    { sl:24, name:"A. K. High School & College (Main Campus)",  addr:"Dania, Dhaka-1236",                                        start:383219, end:387156, total:3200,  lat:23.6997, lng:90.4614 },
+    { sl:25, name:"A.K. High School & College (New Campus)",    addr:"Dania, Dhaka-1236",                                        start:387158, end:389406, total:1800,  lat:23.6993, lng:90.4619 },
+    { sl:26, name:"City Corporation Adarsha High School",       addr:"3/4, Dhalpur, Wari, Dhaka 1203",                           start:389407, end:392100, total:2150,  lat:23.7148, lng:90.4185 },
+    { sl:27, name:"Ahmed Bawany Academy School & College",      addr:"3,4,5 K.P. Ghosh Street, Armanitola, Babubazar, Dhaka-1100", start:392101, end:397070, total:4000, lat:23.7087, lng:90.4085 },
+    { sl:28, name:"Armanitola Govt. High School, Dhaka",        addr:"1 No Abul Khayrath Road, Dhaka 1100",                      start:397071, end:400524, total:2800,  lat:23.7093, lng:90.4072 },
+    { sl:29, name:"Anandamoyee Girls' High School",             addr:"17/18 Kazimuddin Siddiki Lane, Armanitola, Dhaka-1100",    start:400525, end:404033, total:2800,  lat:23.7101, lng:90.4068 },
+    { sl:30, name:"Central Women's College",                    addr:"13/2, Abhay Das Lane, Tikatuli, Dhaka 1203",               start:404034, end:407382, total:2700,  lat:23.7197, lng:90.4111 },
+    { sl:31, name:"Abudharr Ghifari College",                   addr:"Malibag, Dhaka 1217",                                      start:407383, end:411115, total:3000,  lat:23.7519, lng:90.4204 },
+    { sl:32, name:"BTCL Ideal School",                          addr:"Moghbazar, Dhaka 1217",                                    start:411116, end:414893, total:3000,  lat:23.7534, lng:90.4178 },
+    { sl:33, name:"Maghbazar Girls' High School",               addr:"52, Siddirswari, Ramna, Dhaka 1217",                       start:414896, end:418619, total:3000,  lat:23.7546, lng:90.4163 },
+    { sl:34, name:"Siddheswari College",                        addr:"25, Shahid Shangbadik Selina Parveen Sarak, Moghbazar, Dhaka-1217", start:418620, end:423594, total:4000, lat:23.7527, lng:90.4199 },
+    { sl:35, name:"Mohammadpur Girls' High School",             addr:"Noorjahan Road, Mohammadpur, Dhaka 1207",                  start:423595, end:426699, total:2500,  lat:23.7646, lng:90.3638 },
+    { sl:36, name:"Shantibag High School",                      addr:"48, Shantibag, Dhaka 1217",                                start:426700, end:429797, total:2500,  lat:23.7508, lng:90.4211 },
+    { sl:37, name:"Tejgaon Model High School",                  addr:"Tejkonipara, Tejgaon, Dhaka 1215",                         start:429798, end:433522, total:3000,  lat:23.7638, lng:90.3987 },
+    { sl:38, name:"Tejgaon Adarsha School & College",           addr:"446, Tejgaon I/A, Dhaka-1208",                             start:433524, end:437281, total:3000,  lat:23.7651, lng:90.4009 },
+    { sl:39, name:"Kakoli High School & College",               addr:"179 Sat Masjid Road, Dhanmondi, Dhaka 1209",               start:437282, end:440123, total:2300,  lat:23.7479, lng:90.3729 },
+    { sl:40, name:"Dhanmondi Govt. Girl's High School",         addr:"11/A, Dhanmondi Residential Area, Dhaka 1209",             start:440124, end:443231, total:2500,  lat:23.7481, lng:90.3764 },
+    { sl:41, name:"Dhanmondi Govt. Boys High School",           addr:"3, Sobhanbag, Mirpur Road, Dhaka 1207",                    start:443232, end:446755, total:2800,  lat:23.7604, lng:90.3721 },
+    { sl:42, name:"Begum Rahima Adarsha Balika Uchcha Bidyalaya", addr:"27/4-A, Topkhana Road, Shegunbagicha, Dhaka 1000",       start:446756, end:449265, total:2000,  lat:23.7314, lng:90.4082 },
+    { sl:43, name:"Anwara Begum Muslim Girl's High School & College", addr:"13 Nazimuddin Road, Dhaka 1100",                     start:449266, end:452346, total:2500,  lat:23.7091, lng:90.4059 },
+    { sl:44, name:"Rayhan School and College",                  addr:"37/6-A, Azimpur, Dhaka",                                   start:452347, end:453263, total:734,   lat:23.7256, lng:90.3889 },
+  ];
+
+  function findCenter() {
+    const input = document.getElementById('rollInput');
+    const errMsg = document.getElementById('errorMsg');
+    const result = document.getElementById('result');
+    const roll = parseInt(input.value.trim());
+
+    // Reset states
+    input.classList.remove('error', 'success');
+    errMsg.classList.remove('show');
+    result.classList.remove('show');
+
+    if (!roll || isNaN(roll)) {
+      input.classList.add('error');
+      errMsg.textContent = '⚠ Please enter a valid roll number.';
+      errMsg.classList.add('show');
+      return;
+    }
+
+    const center = CENTERS.find(c => roll >= c.start && roll <= c.end);
+
+    if (!center) {
+      input.classList.add('error');
+      errMsg.textContent = `⚠ Roll ${roll} not found. Valid range: 300001 – 453263.`;
+      errMsg.classList.add('show');
+      return;
+    }
+
+    // Populate result
+    input.classList.add('success');
+    document.getElementById('r_roll').textContent  = roll.toLocaleString('en-BD');
+    document.getElementById('r_sl').textContent    = `#${center.sl} of 44`;
+    document.getElementById('r_name').textContent  = center.name;
+    document.getElementById('r_addr').textContent  = center.addr;
+    document.getElementById('r_range').textContent = `${center.start.toLocaleString()} – ${center.end.toLocaleString()}`;
+    document.getElementById('r_total').textContent = center.total.toLocaleString() + ' seats';
+
+    // Progress bar
+    const pct = ((roll - center.start) / (center.end - center.start)) * 100;
+    document.getElementById('r_bar').style.width = `${Math.max(2, pct)}%`;
+    document.getElementById('r_bar_start').textContent = center.start.toLocaleString();
+    document.getElementById('r_bar_roll').textContent  = roll.toLocaleString();
+    document.getElementById('r_bar_end').textContent   = center.end.toLocaleString();
+
+    // Google Maps link
+    const query = encodeURIComponent(`${center.name}, ${center.addr}`);
+    const mapUrl = `https://www.google.com/maps/search/?api=1&query=${query}`;
+    document.getElementById('mapLink').href = mapUrl;
+
+    result.classList.add('show');
+    result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  // Allow Enter key
+  document.getElementById('rollInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') findCenter();
+  });
+</script>
+</body>
+</html>
